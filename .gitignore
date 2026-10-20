@@ -1,0 +1,33 @@
+# .NET build output
+bin/
+obj/
+*.user
+.vs/
+
+# Node / Vite
+node_modules/
+dist/
+*.local
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# BMAD personal config (install answers scoped to one user)
+_bmad/config.user.toml
+_bmad/custom/config.user.toml
+
+# Claude Code personal settings
+.claude/settings.local.json
+
+# Editors / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
