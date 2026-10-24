@@ -1,0 +1,62 @@
+# generated: 10-24-2026 15:51
+# project: taskFlow
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+#
+# Written by hand from sprint-status-template.yaml: sprint_plan.py needs ruamel.yaml,
+# which is not installable here (no uv, no pip). Keys come from the script's own parser.
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# Timestamps use MM-DD-YYYY HH:MM.
+
+generated: 10-24-2026 15:51
+last_updated: 10-24-2026 16:33
+project: taskFlow
+project_key: NOKEY
+tracking_system: file-system
+story_location: "_bmad-output/implementation-artifacts"
+
+development_status:
+  epic-1: in-progress
+  1-1-walking-skeleton-clone-run-see-the-api-respond: review
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-create-a-project-and-see-it-in-the-list: backlog
+  2-2-open-edit-and-delete-a-project: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-add-a-task-to-a-project-api-and-rules: backlog
+  3-2-add-tasks-from-the-ui-and-see-them-newest-first: backlog
+  3-3-edit-a-task-including-persistence-after-restart: backlog
+  3-4-delete-a-task-and-prove-the-project-cascade: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-filter-tasks-by-status-and-priority: backlog
+  4-2-dashboard-totals: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-release-check-fresh-clone-all-acceptance-checks-performance: backlog
+  5-2-ui-polish-and-keyboard-pass-first-to-cut: backlog
+  epic-5-retrospective: optional

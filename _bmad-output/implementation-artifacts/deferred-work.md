@@ -1,0 +1,6 @@
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-1-walking-skeleton.md`
+  summary: Add a repeatable check for `frontend/src/api/client.ts` error mapping (unreachable 502/fetch failure → status 0, JSON error → message=title, `$.Status` → `status`).
+  evidence: Verification-gap review — only a one-off Node run and manual checks cover it; the MVP forbids a frontend test framework, so options are a dependency-free committed `node --test` script with stubbed `fetch`, or a manual checklist item in Story 5.1.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-1-walking-skeleton.md`
+  summary: Verify the OpenAPI document shows `TaskItemStatus`/`TaskPriority` as string enums (converter is registered on MVC JsonOptions only).
+  evidence: Unverified (maybe-false, would be medium for NFR-6). Settle in Story 3.1 by checking `/openapi/v1.json`; if ints appear, also register the converter via `ConfigureHttpJsonOptions`.
