@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import { ApiError, type FieldErrors } from '../api/client'
 import { createProject, listProjects } from '../api/projects'
 import type { ProjectDto, SaveProjectRequest } from '../api/types'
 import EmptyState from '../components/EmptyState'
 import ErrorBanner from '../components/ErrorBanner'
 import ProjectForm from '../components/ProjectForm'
-import { PROJECT_FORM_FIELDS } from '../components/projectFormFields'
+import { splitProjectFieldErrors } from '../components/projectFormFields'
 
 const FALLBACK_MESSAGE = 'Something went wrong. Please try again.'
 
@@ -55,12 +56,7 @@ export default function ProjectsPage() {
         setFormError(FALLBACK_MESSAGE)
         return false
       }
-      const matched: FieldErrors = {}
-      const unmatched: string[] = []
-      for (const [key, messages] of Object.entries(error.fieldErrors)) {
-        if (PROJECT_FORM_FIELDS.includes(key)) matched[key] = messages
-        else unmatched.push(...messages)
-      }
+      const { matched, unmatched } = splitProjectFieldErrors(error.fieldErrors)
       setFieldErrors(matched)
       setFormError([error.message, ...unmatched].join(' '))
       return false
@@ -90,7 +86,10 @@ export default function ProjectsPage() {
           <ul className="project-list">
             {list.projects.map((project) => (
               <li key={project.id}>
-                <span className="project-name">{project.name}</span>
+                {/* A native link, so it is reachable with Tab and opens with Enter. */}
+                <Link className="project-name" to={`/projects/${project.id}`}>
+                  {project.name}
+                </Link>
                 <span className="project-count">
                   {project.taskCount} {project.taskCount === 1 ? 'task' : 'tasks'}
                 </span>

@@ -7,3 +7,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-1-create-and-list-projects.md`
   summary: Automated checks for ProjectsPage behaviour (field errors next to inputs, unmatched keys to banner, form kept on error / cleared on success, empty state).
   evidence: Verification-gap review — only `npm run build` and manual/headless browser checks cover it; the MVP has no frontend test runner by architecture decision. Same root as the client.ts deferral from Story 1.1.
+- source_spec: `_bmad-output/implementation-artifacts/spec-2-2-open-edit-and-delete-a-project.md`
+  summary: Automated checks for ProjectPage and ProjectForm (edit keeps values on 400, create clears on success, 404 → "Project not found.", delete confirm wording).
+  evidence: Verification-gap review — only build/lint and scripted headless-browser runs cover it; no frontend test runner in the MVP. Same root as the Story 1.1 and 2.1 deferrals; worth one decision for all three.

@@ -35,6 +35,22 @@ public class OpenApiTests : IDisposable
     }
 
     [Fact]
+    public async Task OpenApi_UpdateAndDeleteProject_DocumentResponses()
+    {
+        var client = _factory.CreateClient();
+
+        using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
+
+        var path = document.RootElement.GetProperty("paths").GetProperty("/api/projects/{id}");
+        var putResponses = path.GetProperty("put").GetProperty("responses")
+            .EnumerateObject().Select(r => r.Name).Order().ToArray();
+        var deleteResponses = path.GetProperty("delete").GetProperty("responses")
+            .EnumerateObject().Select(r => r.Name).Order().ToArray();
+        Assert.Equal(["200", "400", "404"], putResponses);
+        Assert.Equal(["204", "404"], deleteResponses);
+    }
+
+    [Fact]
     public async Task SwaggerUi_Get_ReturnsPage()
     {
         var client = _factory.CreateClient();

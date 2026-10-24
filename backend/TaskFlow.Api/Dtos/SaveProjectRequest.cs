@@ -1,7 +1,7 @@
 namespace TaskFlow.Api.Dtos;
 
 /// <summary>
-/// Body of POST (and, in Story 2.2, PUT) /api/projects.
+/// Body of POST /api/projects and PUT /api/projects/{id}.
 /// Every property is nullable so a missing field reaches ProjectService,
 /// which reports it with the project's own message instead of a framework one.
 /// </summary>

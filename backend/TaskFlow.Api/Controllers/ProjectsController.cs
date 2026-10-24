@@ -42,4 +42,34 @@ public class ProjectsController(ProjectService projects) : ControllerBase
             _ => throw new InvalidOperationException($"Unexpected result kind {result.Kind}."),
         };
     }
+
+    [HttpPut("{id:int}")]
+    [ProducesResponseType<ProjectDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ProjectDto>> Update(int id, SaveProjectRequest request)
+    {
+        var result = await projects.UpdateAsync(id, request);
+        return result.Kind switch
+        {
+            ResultKind.Ok => Ok(result.Value),
+            ResultKind.NotFound => NotFound(),
+            ResultKind.Invalid => ValidationProblem(new ValidationProblemDetails(result.Errors)),
+            _ => throw new InvalidOperationException($"Unexpected result kind {result.Kind}."),
+        };
+    }
+
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var result = await projects.DeleteAsync(id);
+        return result.Kind switch
+        {
+            ResultKind.Ok => NoContent(),
+            ResultKind.NotFound => NotFound(),
+            _ => throw new InvalidOperationException($"Unexpected result kind {result.Kind}."),
+        };
+    }
 }

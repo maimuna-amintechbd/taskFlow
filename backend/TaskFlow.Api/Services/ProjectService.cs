@@ -54,6 +54,50 @@ public class ProjectService(TaskFlowDbContext db)
         return ServiceResult<ProjectDto>.Ok(dto!);
     }
 
+    /// <summary>
+    /// Full replace: every field comes from the request, so an omitted description is cleared.
+    /// An unknown id is reported before this service validates the body. Bodies the
+    /// framework cannot read (empty, malformed, wrong types) are rejected earlier with 400.
+    /// </summary>
+    public async Task<ServiceResult<ProjectDto>> UpdateAsync(int id, SaveProjectRequest request)
+    {
+        // FindAsync returns a tracked entity, so SaveChangesAsync writes only what changed.
+        var project = await db.Projects.FindAsync(id);
+        if (project is null)
+        {
+            return ServiceResult<ProjectDto>.NotFound();
+        }
+
+        var errors = ValidateAndApply(request, project);
+        if (errors.Count > 0)
+        {
+            // ValidateAndApply left the entity untouched, and nothing is saved.
+            return ServiceResult<ProjectDto>.Invalid(errors);
+        }
+
+        await db.SaveChangesAsync();
+
+        var dto = await FindDtoAsync(id);
+        return ServiceResult<ProjectDto>.Ok(dto!);
+    }
+
+    /// <summary>
+    /// Removes only the project row. Tasks are never loaded: from Story 3.1 the
+    /// database's ON DELETE CASCADE removes them.
+    /// </summary>
+    public async Task<ServiceResult> DeleteAsync(int id)
+    {
+        var project = await db.Projects.FindAsync(id);
+        if (project is null)
+        {
+            return ServiceResult.NotFound();
+        }
+
+        db.Projects.Remove(project);
+        await db.SaveChangesAsync();
+        return ServiceResult.Ok();
+    }
+
     private Task<ProjectDto?> FindDtoAsync(int id) =>
         db.Projects
             .AsNoTracking()

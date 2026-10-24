@@ -113,8 +113,10 @@ textarea:focus-visible {
   font-size: 0.875rem;
 }
 
-.project-form button {
-  align-self: flex-start;
+/* --- Buttons --- */
+
+/* The primary action (Create, Save) is solid green. */
+button {
   font: inherit;
   padding: 0.5rem 1rem;
   border: 1px solid #1f883d;
@@ -124,9 +126,29 @@ textarea:focus-visible {
   cursor: pointer;
 }
 
-.project-form button:disabled {
+button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/* Secondary actions (Edit, Cancel) are outlined, so they never compete with the primary one. */
+.button-secondary {
+  border-color: #8c959f;
+  background: #f6f8fa;
+  color: #1f2328;
+}
+
+/* Destructive actions are outlined in red. */
+.button-danger {
+  border-color: #cf222e;
+  background: #ffffff;
+  color: #cf222e;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 /* --- Lists --- */
@@ -162,4 +184,27 @@ textarea:focus-visible {
 .project-count {
   color: #59636e;
   white-space: nowrap;
+}
+
+/* --- Project details --- */
+
+.project-title {
+  overflow-wrap: anywhere;
+}
+
+.project-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.project-details p {
+  margin: 0;
+}
+
+/* Keep the line breaks the user typed in the description. */
+.project-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

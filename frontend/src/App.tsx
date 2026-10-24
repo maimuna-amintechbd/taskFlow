@@ -1,6 +1,7 @@
 import { NavLink, Route, Routes } from 'react-router'
 import DashboardPage from './pages/DashboardPage'
 import NotFoundPage from './pages/NotFoundPage'
+import ProjectPage from './pages/ProjectPage'
 import ProjectsPage from './pages/ProjectsPage'
 import TasksPage from './pages/TasksPage'
 
@@ -22,6 +23,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/:id" element={<ProjectPage />} />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
