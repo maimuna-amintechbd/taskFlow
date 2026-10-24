@@ -28,15 +28,15 @@
 # Timestamps use MM-DD-YYYY HH:MM.
 
 generated: 10-24-2026 15:51
-last_updated: 10-24-2026 16:33
+last_updated: 10-24-2026 16:39
 project: taskFlow
 project_key: NOKEY
 tracking_system: file-system
 story_location: "_bmad-output/implementation-artifacts"
 
 development_status:
-  epic-1: in-progress
-  1-1-walking-skeleton-clone-run-see-the-api-respond: review
+  epic-1: done
+  1-1-walking-skeleton-clone-run-see-the-api-respond: done
   epic-1-retrospective: optional
 
   epic-2: backlog
