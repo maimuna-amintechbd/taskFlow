@@ -1,4 +1,7 @@
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using TaskFlow.Api.Data;
+using TaskFlow.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +23,23 @@ builder.Services.AddHealthChecks();
 // Generates the OpenAPI document at /openapi/v1.json.
 builder.Services.AddOpenApi();
 
+// One TaskFlowDbContext per request, backed by SQLite. The connection string is read
+// when the context is first created (not now), so tests can swap it with UseSetting.
+builder.Services.AddDbContext<TaskFlowDbContext>((serviceProvider, options) =>
+    options.UseSqlite(serviceProvider.GetRequiredService<IConfiguration>().GetConnectionString("TaskFlow")));
+
+// Business rules and data access for projects. Scoped = one instance per request.
+builder.Services.AddScoped<ProjectService>();
+
 var app = builder.Build();
+
+// Create the database file (if missing) and apply any pending migrations at startup,
+// so there is no manual SQL step. A scope is needed because the DbContext is scoped.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<TaskFlowDbContext>();
+    await db.Database.MigrateAsync();
+}
 
 // --- HTTP pipeline (middleware runs in this order for every request) ---
 

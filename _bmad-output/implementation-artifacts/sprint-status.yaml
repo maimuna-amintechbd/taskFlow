@@ -28,7 +28,7 @@
 # Timestamps use MM-DD-YYYY HH:MM.
 
 generated: 10-24-2026 15:51
-last_updated: 10-24-2026 16:39
+last_updated: 10-24-2026 16:57
 project: taskFlow
 project_key: NOKEY
 tracking_system: file-system
@@ -39,8 +39,8 @@ development_status:
   1-1-walking-skeleton-clone-run-see-the-api-respond: done
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-create-a-project-and-see-it-in-the-list: backlog
+  epic-2: in-progress
+  2-1-create-a-project-and-see-it-in-the-list: review
   2-2-open-edit-and-delete-a-project: backlog
   epic-2-retrospective: optional
 

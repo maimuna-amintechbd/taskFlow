@@ -25,11 +25,21 @@ cd frontend && npm install && npm run dev            # app on http://localhost:5
 Open <http://localhost:5173>. The Dashboard shows **API connected** when the frontend can reach the API.
 Swagger UI (Development only) is at <http://localhost:5080/swagger>.
 
+The first run creates the SQLite database file and applies the migrations automatically; there is no manual SQL step. The path `taskflow.db` is relative to the working directory: the `dotnet run --project TaskFlow.Api` command above creates it in `backend/TaskFlow.Api/`, and starting the API another way (for example from a different folder) may create a separate, empty database. To start over with an empty database, stop the API first, then delete `backend/TaskFlow.Api/taskflow.db*` (SQLite also writes `-wal` and `-shm` files next to it). These files are gitignored.
+
 ## Test and build
 
 ```bash
 (cd backend && dotnet test)                          # backend tests
 (cd frontend && npm run build)                       # type-check + production build
+```
+
+Each test gets a fresh in-memory SQLite database (xUnit creates a new test-class instance, and so a new API factory, for every test); the tests never touch your `taskflow.db`.
+
+Developer only — after changing an entity or `TaskFlowDbContext`, create a migration (run from the repo root; the API applies it on its next start):
+
+```bash
+dotnet tool restore && dotnet ef migrations add <Name> --project backend/TaskFlow.Api --output-dir Data/Migrations
 ```
 
 ## Dependencies added beyond the templates
@@ -39,10 +49,12 @@ The projects were created from the standard `dotnet new webapi`, `dotnet new xun
 | Package | Version | Why |
 | --- | --- | --- |
 | Swashbuckle.AspNetCore.SwaggerUI | 10.3.1 | .NET 10 generates the OpenAPI document (`/openapi/v1.json`) but has no page to browse it. This UI-only package serves the Swagger page at `/swagger`. |
+| Microsoft.EntityFrameworkCore.Sqlite | 10.0.11 | Entity Framework Core with the SQLite provider: maps C# classes to tables and stores the data in `taskflow.db`. |
+| Microsoft.EntityFrameworkCore.Design | 10.0.11 | Design-time support the `dotnet ef` tool needs to generate migrations. Marked `PrivateAssets=all`, so it is a build-time-only dependency. |
 | Microsoft.AspNetCore.Mvc.Testing | 10.0.11 | Provides `WebApplicationFactory`, which starts the real API in memory so tests can call it over HTTP. |
 | react-router | 8.5.x | Real URLs for each page and a working back button. Imported from `react-router` (not `react-router-dom`, which stops at v7). |
 
-All Microsoft packages are pinned to 10.0.11, matching the .NET 10 runtime. The repo-local tool manifest (`.config/dotnet-tools.json`) also pins `dotnet-ef` 10.0.11 for creating database migrations in a later story.
+All Microsoft packages are pinned to 10.0.11, matching the .NET 10 runtime. The repo-local tool manifest (`.config/dotnet-tools.json`) also pins `dotnet-ef` 10.0.11 for creating database migrations.
 
 ## How TaskFlow is built
 
