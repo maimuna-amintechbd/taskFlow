@@ -10,3 +10,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-2-2-open-edit-and-delete-a-project.md`
   summary: Automated checks for ProjectPage and ProjectForm (edit keeps values on 400, create clears on success, 404 → "Project not found.", delete confirm wording).
   evidence: Verification-gap review — only build/lint and scripted headless-browser runs cover it; no frontend test runner in the MVP. Same root as the Story 1.1 and 2.1 deferrals; worth one decision for all three.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-1-add-a-task-api-and-rules.md`
+  summary: RESOLVED — the "OpenAPI shows TaskItemStatus/TaskPriority as string enums" item from Story 1.1 was a real bug, fixed in Story 3.1 (ConfigureHttpJsonOptions) and covered by OpenApiTests.
+  evidence: `/openapi/v1.json` listed both enums as integers before the fix; now lists the names.

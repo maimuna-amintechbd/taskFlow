@@ -1,0 +1,42 @@
+using Microsoft.AspNetCore.Mvc;
+using TaskFlow.Api.Dtos;
+using TaskFlow.Api.Services;
+
+namespace TaskFlow.Api.Controllers;
+
+/// <summary>
+/// HTTP only: binds input, calls one TaskService method and maps its result
+/// to a status code. No rules and no database access live here.
+/// </summary>
+[ApiController]
+[Route("api/tasks")]
+public class TasksController(TaskService tasks) : ControllerBase
+{
+    [HttpGet("{id:int}")]
+    [ProducesResponseType<TaskDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TaskDto>> GetById(int id)
+    {
+        var result = await tasks.GetByIdAsync(id);
+        return result.Kind switch
+        {
+            ResultKind.Ok => Ok(result.Value),
+            ResultKind.NotFound => NotFound(),
+            _ => throw new InvalidOperationException($"Unexpected result kind {result.Kind}."),
+        };
+    }
+
+    [HttpPost]
+    [ProducesResponseType<TaskDto>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<TaskDto>> Create(SaveTaskRequest request)
+    {
+        var result = await tasks.CreateAsync(request);
+        return result.Kind switch
+        {
+            ResultKind.Ok => CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value),
+            ResultKind.Invalid => ValidationProblem(new ValidationProblemDetails(result.Errors)),
+            _ => throw new InvalidOperationException($"Unexpected result kind {result.Kind}."),
+        };
+    }
+}

@@ -18,10 +18,10 @@ public class ProjectService(TaskFlowDbContext db)
     /// <summary>
     /// The one place a Project becomes a ProjectDto. It is an expression tree, not a
     /// compiled method, so EF Core translates it into the SQL SELECT list.
-    /// TaskCount is 0 until Story 3.1 adds tasks.
+    /// p.Tasks.Count() becomes a COUNT subquery; the tasks themselves are never loaded.
     /// </summary>
     private static readonly Expression<Func<Project, ProjectDto>> ToDto =
-        p => new ProjectDto(p.Id, p.Name, p.Description, 0);
+        p => new ProjectDto(p.Id, p.Name, p.Description, p.Tasks.Count());
 
     public async Task<List<ProjectDto>> ListAsync() =>
         await db.Projects
@@ -82,8 +82,8 @@ public class ProjectService(TaskFlowDbContext db)
     }
 
     /// <summary>
-    /// Removes only the project row. Tasks are never loaded: from Story 3.1 the
-    /// database's ON DELETE CASCADE removes them.
+    /// Removes only the project row. Tasks are never loaded: the database's
+    /// ON DELETE CASCADE removes them.
     /// </summary>
     public async Task<ServiceResult> DeleteAsync(int id)
     {

@@ -50,6 +50,27 @@ public class OpenApiTests : IDisposable
         Assert.Equal(["204", "404"], deleteResponses);
     }
 
+    [Theory]
+    [InlineData("status", new[] { "Todo", "InProgress", "Done" })]
+    [InlineData("priority", new[] { "Low", "Medium", "High" })]
+    public async Task OpenApi_TaskDtoEnums_AreDocumentedAsStringNames(string property, string[] expected)
+    {
+        var client = _factory.CreateClient();
+
+        using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
+
+        // TaskDto.status/priority point ("$ref") at a shared enum schema; follow it.
+        var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
+        var schema = schemas.GetProperty("TaskDto").GetProperty("properties").GetProperty(property);
+        if (schema.TryGetProperty("$ref", out var reference))
+        {
+            schema = schemas.GetProperty(reference.GetString()!.Split('/').Last());
+        }
+
+        var names = schema.GetProperty("enum").EnumerateArray().Select(e => e.GetString()!).ToArray();
+        Assert.Equal(expected, names);
+    }
+
     [Fact]
     public async Task SwaggerUi_Get_ReturnsPage()
     {

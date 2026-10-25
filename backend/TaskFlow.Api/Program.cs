@@ -14,6 +14,13 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(
             new JsonStringEnumConverter(allowIntegerValues: false)));
 
+// The OpenAPI document generator reads these "HTTP JSON options", not the MVC ones
+// above. Registering the same converter here makes the document describe status and
+// priority as their names ("Todo", "InProgress", "Done") instead of integers.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(
+        new JsonStringEnumConverter(allowIntegerValues: false)));
+
 // Unexpected failures become a standard 500 ProblemDetails JSON body.
 builder.Services.AddProblemDetails();
 
@@ -28,8 +35,13 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<TaskFlowDbContext>((serviceProvider, options) =>
     options.UseSqlite(serviceProvider.GetRequiredService<IConfiguration>().GetConnectionString("TaskFlow")));
 
-// Business rules and data access for projects. Scoped = one instance per request.
+// The app's clock. Services ask it for "now" instead of calling DateTime.Now,
+// so tests can replace it with a fixed time. Singleton: one shared instance.
+builder.Services.AddSingleton(TimeProvider.System);
+
+// Business rules and data access. Scoped = one instance per request.
 builder.Services.AddScoped<ProjectService>();
+builder.Services.AddScoped<TaskService>();
 
 var app = builder.Build();
 
