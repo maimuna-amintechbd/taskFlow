@@ -54,4 +54,24 @@ public class TasksController(TaskService tasks) : ControllerBase
             _ => throw new InvalidOperationException($"Unexpected result kind {result.Kind}."),
         };
     }
+
+    /// <summary>
+    /// PUT /api/tasks/{id} — full replace. An unknown id is a 404 even when the body breaks
+    /// TaskService's rules; bodies the framework cannot read are rejected earlier with 400.
+    /// </summary>
+    [HttpPut("{id:int}")]
+    [ProducesResponseType<TaskDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TaskDto>> Update(int id, SaveTaskRequest request)
+    {
+        var result = await tasks.UpdateAsync(id, request);
+        return result.Kind switch
+        {
+            ResultKind.Ok => Ok(result.Value),
+            ResultKind.NotFound => NotFound(),
+            ResultKind.Invalid => ValidationProblem(new ValidationProblemDetails(result.Errors)),
+            _ => throw new InvalidOperationException($"Unexpected result kind {result.Kind}."),
+        };
+    }
 }

@@ -1,7 +1,7 @@
 namespace TaskFlow.Api.Dtos;
 
 /// <summary>
-/// Body of POST /api/tasks (and, from Story 3.3, PUT /api/tasks/{id}).
+/// Body of POST /api/tasks and PUT /api/tasks/{id}.
 /// Every property is nullable so a missing field reaches TaskService, which reports
 /// it with the task's own message. Status and priority are strings, not enums, so
 /// TaskService can apply the strict name rules (see EnumNames) and its own messages.

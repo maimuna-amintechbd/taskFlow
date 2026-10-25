@@ -22,3 +22,17 @@ export function createTask(body: SaveTaskRequest): Promise<TaskDto> {
     body: JSON.stringify(body),
   })
 }
+
+/** GET /api/tasks/{id} — rejects with ApiError (status 404) for an unknown id. */
+export function getTask(id: number): Promise<TaskDto> {
+  return request<TaskDto>(`/api/tasks/${id}`)
+}
+
+/** PUT /api/tasks/{id} — full replace; rejects with ApiError 404 (unknown id) or 400 (invalid). */
+export function updateTask(id: number, body: SaveTaskRequest): Promise<TaskDto> {
+  return request<TaskDto>(`/api/tasks/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}

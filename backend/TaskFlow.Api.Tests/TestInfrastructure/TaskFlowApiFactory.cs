@@ -14,18 +14,30 @@ namespace TaskFlow.Api.Tests.TestInfrastructure;
 /// </summary>
 public class TaskFlowApiFactory : WebApplicationFactory<Program>
 {
-    // A uniquely named, shared-cache in-memory SQLite database: every connection that
-    // uses this exact string sees the same database, and no other factory can.
-    private readonly string _connectionString =
-        $"Data Source=taskflow-test-{Guid.NewGuid()};Mode=Memory;Cache=Shared";
+    private readonly string _connectionString;
 
     // An in-memory SQLite database is deleted when its last connection closes.
     // Keeping this one open for the factory's lifetime keeps the data alive between
-    // requests, which each open and close their own connection.
-    private readonly SqliteConnection _keepAliveConnection;
+    // requests, which each open and close their own connection. Null for a file
+    // database, which keeps its data on disk without any open connection.
+    private readonly SqliteConnection? _keepAliveConnection;
 
-    public TaskFlowApiFactory()
+    /// <param name="connectionString">
+    /// Omit it (the usual case) for a private in-memory database. Pass a file database
+    /// (e.g. "Data Source=/tmp/x.db") to test that data outlives the factory; the
+    /// caller then owns the file and deletes it.
+    /// </param>
+    public TaskFlowApiFactory(string? connectionString = null)
     {
+        if (connectionString is not null)
+        {
+            _connectionString = connectionString;
+            return;
+        }
+
+        // A uniquely named, shared-cache in-memory SQLite database: every connection that
+        // uses this exact string sees the same database, and no other factory can.
+        _connectionString = $"Data Source=taskflow-test-{Guid.NewGuid()};Mode=Memory;Cache=Shared";
         _keepAliveConnection = new SqliteConnection(_connectionString);
         _keepAliveConnection.Open();
     }
@@ -60,7 +72,7 @@ public class TaskFlowApiFactory : WebApplicationFactory<Program>
         base.Dispose(disposing);
         if (disposing)
         {
-            _keepAliveConnection.Dispose();
+            _keepAliveConnection?.Dispose();
         }
     }
 }

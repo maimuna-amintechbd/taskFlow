@@ -16,3 +16,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-2-add-tasks-from-the-ui-and-list-them.md`
   summary: Automated checks for the task UI (TaskFormPage preselection rules, splitTaskFieldErrors, project rename → task rows show the new name).
   evidence: Verification-gap review; no frontend test runner in the MVP. Same root as the Story 1.1/2.1/2.2 entries — one decision for all four. Add "rename a project → task rows update" to the Story 5.1 manual checklist.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-3-edit-a-task.md`
+  summary: Automated checks for TaskEditPage/TaskForm edit mode (pre-filled values, '' → null and numeric projectId in the PUT body, "Task not found.", navigation to the saved project).
+  evidence: Verification-gap review; no frontend test runner in the MVP. Same decision as the Story 1.1–3.2 entries.

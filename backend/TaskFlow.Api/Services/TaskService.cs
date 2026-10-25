@@ -94,6 +94,35 @@ public class TaskService(TaskFlowDbContext db, TimeProvider timeProvider)
         return ServiceResult<TaskDto>.Ok(dto!);
     }
 
+    /// <summary>
+    /// Full replace: title, project, status and priority are required; an omitted
+    /// description or due date is cleared. An unknown id is reported before this
+    /// service validates the body. Bodies the framework cannot read (empty, malformed,
+    /// wrong types such as "dueDate": "") are rejected earlier with 400.
+    /// </summary>
+    public async Task<ServiceResult<TaskDto>> UpdateAsync(int id, SaveTaskRequest request)
+    {
+        // FindAsync returns a tracked entity, so SaveChangesAsync writes only what changed.
+        var task = await db.TaskItems.FindAsync(id);
+        if (task is null)
+        {
+            return ServiceResult<TaskDto>.NotFound();
+        }
+
+        var errors = await ValidateAndApplyAsync(request, task, isNew: false);
+        if (errors.Count > 0)
+        {
+            // ValidateAndApplyAsync left the entity untouched, and nothing is saved.
+            return ServiceResult<TaskDto>.Invalid(errors);
+        }
+
+        await db.SaveChangesAsync();
+
+        // Re-read so a moved task reports its new project's name.
+        var dto = await FindDtoAsync(id);
+        return ServiceResult<TaskDto>.Ok(dto!);
+    }
+
     private Task<TaskDto?> FindDtoAsync(int id) =>
         db.TaskItems
             .AsNoTracking()
@@ -104,19 +133,14 @@ public class TaskService(TaskFlowDbContext db, TimeProvider timeProvider)
     /// <summary>
     /// Checks every rule in one pass (at most one message per field) and copies the
     /// values onto <paramref name="task"/> only when there are no errors. Shared by
-    /// create and (from Story 3.3) update; <paramref name="isNew"/> only switches the
-    /// status/priority defaults and the due-date comparison.
+    /// create and update; <paramref name="isNew"/> only switches the status/priority
+    /// defaults (create) versus required (update), and the due-date comparison
+    /// (update compares against the stored date, so <paramref name="task"/> must be
+    /// the tracked entity as loaded from the database).
     /// </summary>
     private async Task<Dictionary<string, string[]>> ValidateAndApplyAsync(
         SaveTaskRequest request, TaskItem task, bool isNew)
     {
-        // Only create is wired up so far. The edit rules (required status/priority,
-        // keeping an unchanged past due date) arrive with PUT in Story 3.3.
-        if (!isNew)
-        {
-            throw new NotSupportedException("Validating an edit (isNew: false) arrives in Story 3.3.");
-        }
-
         var errors = new Dictionary<string, string[]>();
 
         var title = request.Title?.Trim() ?? "";
@@ -147,23 +171,42 @@ public class TaskService(TaskFlowDbContext db, TimeProvider timeProvider)
             errors["projectId"] = [$"Project {projectId} does not exist."];
         }
 
-        // On create, a missing (null) status/priority takes the default; a value that
-        // is present but empty or not an exact name is an error.
+        // On create, a missing (null) status/priority takes the default. An edit is a
+        // full replace, so there it is required. Either way, a value that is present but
+        // empty or not an exact name is an error.
         var status = TaskItemStatus.Todo;
-        if (request.Status is not null && !EnumNames.TryParse(request.Status, out status))
+        if (request.Status is null)
+        {
+            if (!isNew)
+            {
+                errors["status"] = ["Status is required."];
+            }
+        }
+        else if (!EnumNames.TryParse(request.Status, out status))
         {
             errors["status"] = [$"Status must be one of: {EnumNames.List<TaskItemStatus>()}."];
         }
 
         var priority = TaskPriority.Medium;
-        if (request.Priority is not null && !EnumNames.TryParse(request.Priority, out priority))
+        if (request.Priority is null)
+        {
+            if (!isNew)
+            {
+                errors["priority"] = ["Priority is required."];
+            }
+        }
+        else if (!EnumNames.TryParse(request.Priority, out priority))
         {
             errors["priority"] = [$"Priority must be one of: {EnumNames.List<TaskPriority>()}."];
         }
 
         // "Today" is the backend machine's local date, read from the injected clock.
+        // null always passes (no date, or clearing it). On edit, a date equal to the one
+        // already stored passes even if it is now in the past, so an overdue task can
+        // still be edited without moving its date; any other date must be today or later.
         var today = DateOnly.FromDateTime(timeProvider.GetLocalNow().DateTime);
-        if (request.DueDate is { } dueDate && dueDate < today)
+        var keepsStoredDate = !isNew && request.DueDate == task.DueDate;
+        if (request.DueDate is { } dueDate && !keepsStoredDate && dueDate < today)
         {
             errors["dueDate"] = ["Due date cannot be in the past."];
         }

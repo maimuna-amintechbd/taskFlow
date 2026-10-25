@@ -1,5 +1,5 @@
 import type { FieldErrors } from '../api/client'
-import type { SaveTaskRequest } from '../api/types'
+import type { SaveTaskRequest, TaskItemStatus, TaskPriority } from '../api/types'
 
 /**
  * The error keys TaskForm shows next to an input. Pages send every other key
@@ -30,4 +30,16 @@ export function splitTaskFieldErrors(fieldErrors: FieldErrors): {
     else unmatched.push(...messages)
   }
   return { matched, unmatched }
+}
+
+/** What the inputs start with in edit mode, as the strings the inputs hold ('' = empty). */
+export interface TaskFormValues {
+  title: string
+  description: string
+  /** A project id as text, e.g. '3'. */
+  projectId: string
+  status: TaskItemStatus
+  priority: TaskPriority
+  /** 'yyyy-MM-dd' or ''. */
+  dueDate: string
 }

@@ -3,6 +3,7 @@ import DashboardPage from './pages/DashboardPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ProjectPage from './pages/ProjectPage'
 import ProjectsPage from './pages/ProjectsPage'
+import TaskEditPage from './pages/TaskEditPage'
 import TaskFormPage from './pages/TaskFormPage'
 import TasksPage from './pages/TasksPage'
 
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/projects/:id" element={<ProjectPage />} />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/tasks/new" element={<TaskFormPage />} />
+          <Route path="/tasks/:id/edit" element={<TaskEditPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

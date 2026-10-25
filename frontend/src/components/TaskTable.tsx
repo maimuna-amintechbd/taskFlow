@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import type { TaskDto } from '../api/types'
 import EmptyState from './EmptyState'
 
@@ -28,7 +29,10 @@ export default function TaskTable({ tasks, label }: TaskTableProps) {
         <tbody>
           {tasks.map((task) => (
             <tr key={task.id}>
-              <td className="task-title">{task.title}</td>
+              <td className="task-title">
+                {/* A real link, so Tab and Enter open the edit page too. */}
+                <Link to={`/tasks/${task.id}/edit`}>{task.title}</Link>
+              </td>
               <td className="task-project">{task.projectName}</td>
               <td>{task.status}</td>
               <td>{task.priority}</td>

@@ -9,6 +9,7 @@ import {
   type TaskPriority,
 } from '../api/types'
 import FieldError from './FieldError'
+import type { TaskFormValues } from './taskFormFields'
 
 interface TaskFormProps {
   /** The choices for the Project select. The page loads them; this component never calls the API. */
@@ -17,14 +18,17 @@ interface TaskFormProps {
   onSubmit: (values: SaveTaskRequest) => Promise<boolean>
   fieldErrors: FieldErrors
   submitLabel: string
-  /** The project selected at first (e.g. from ?projectId=). Without it, no project is chosen. */
+  /** Create mode only: the project selected at first (e.g. from ?projectId=). Without it, no project is chosen. */
   initialProjectId?: number
+  /** Seeds every input when editing. Without it the form is in create mode and starts from the defaults. */
+  initialValues?: TaskFormValues
 }
 
 /**
  * Title, description, project, status, priority and due date inputs. The API owns
- * every rule, so there are no HTML constraint attributes (no required, no min on the
- * date); its messages arrive through `fieldErrors`. Story 3.3 adds edit mode.
+ * every rule, so there are no HTML constraint attributes (no required, and no min on
+ * the date, so an unchanged past due date can still be saved when editing); its
+ * messages arrive through `fieldErrors`.
  */
 export default function TaskForm({
   projects,
@@ -32,16 +36,28 @@ export default function TaskForm({
   fieldErrors,
   submitLabel,
   initialProjectId,
+  initialValues,
 }: TaskFormProps) {
+  // Edit mode starts from the task's values; create mode from the defaults.
+  const start: TaskFormValues = initialValues ?? {
+    title: '',
+    description: '',
+    projectId: initialProjectId === undefined ? '' : String(initialProjectId),
+    status: 'Todo',
+    priority: 'Medium',
+    dueDate: '',
+  }
+
   // Every input holds a string while editing, exactly like the DOM does.
-  // useState reads its argument only on the first render.
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [projectId, setProjectId] = useState(initialProjectId === undefined ? '' : String(initialProjectId))
-  const [status, setStatus] = useState<TaskItemStatus>('Todo')
-  const [priority, setPriority] = useState<TaskPriority>('Medium')
+  // useState reads its argument only on the first render, so later prop changes
+  // don't overwrite what the user is typing.
+  const [title, setTitle] = useState(start.title)
+  const [description, setDescription] = useState(start.description)
+  const [projectId, setProjectId] = useState(start.projectId)
+  const [status, setStatus] = useState<TaskItemStatus>(start.status)
+  const [priority, setPriority] = useState<TaskPriority>(start.priority)
   // The date input's value is already 'yyyy-MM-dd' (or ''), so it is sent as is.
-  const [dueDate, setDueDate] = useState('')
+  const [dueDate, setDueDate] = useState(start.dueDate)
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
