@@ -17,6 +17,7 @@ public class HealthTests : IDisposable
         var response = await client.GetAsync("/api/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/plain", response.Content.Headers.ContentType?.MediaType);
         Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
     }
 }

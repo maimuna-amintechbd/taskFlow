@@ -136,6 +136,40 @@ public class OpenApiTests : IDisposable
     }
 
     [Fact]
+    public async Task OpenApi_EveryApiEndpoint_IsDocumented()
+    {
+        var client = _factory.CreateClient();
+
+        using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
+
+        // Every path and method of the API contract (architecture AD-9), so Swagger lists them all.
+        var expected = new Dictionary<string, string[]>
+        {
+            ["/api/health"] = ["get"],
+            ["/api/projects"] = ["get", "post"],
+            ["/api/projects/{id}"] = ["delete", "get", "put"],
+            ["/api/tasks"] = ["get", "post"],
+            ["/api/tasks/{id}"] = ["delete", "get", "put"],
+            ["/api/dashboard"] = ["get"],
+        };
+
+        var paths = document.RootElement.GetProperty("paths");
+        Assert.Equal(
+            expected.Keys.Order(),
+            paths.EnumerateObject().Select(p => p.Name).Order());
+        foreach (var (path, methods) in expected)
+        {
+            Assert.True(paths.TryGetProperty(path, out var operations), $"{path} is missing from the OpenAPI document");
+            var documented = operations.EnumerateObject()
+                .Select(o => o.Name)
+                .Where(name => name is "get" or "post" or "put" or "delete" or "patch")
+                .Order()
+                .ToArray();
+            Assert.Equal(methods, documented);
+        }
+    }
+
+    [Fact]
     public async Task SwaggerUi_Get_ReturnsPage()
     {
         var client = _factory.CreateClient();

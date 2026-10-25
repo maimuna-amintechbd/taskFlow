@@ -42,6 +42,22 @@ Developer only — after changing an entity or `TaskFlowDbContext`, create a mig
 dotnet tool restore && dotnet ef migrations add <Name> --project backend/TaskFlow.Api --output-dir Data/Migrations
 ```
 
+## Release checks
+
+Each release acceptance check from the PRD, and how it is proven. Test files are in `backend/TaskFlow.Api.Tests/` and run with `(cd backend && dotnet test)` (see [Test and build](#test-and-build)).
+
+| Check | What it checks | How it is verified |
+| --- | --- | --- |
+| AC-1 | A task must have a valid title (present, at most 200 characters after trimming). | Automated integration tests: `Tasks/CreateTaskTests.cs` and `Tasks/UpdateTaskTests.cs` (`CreateTaskTests`, `UpdateTaskTests`). |
+| AC-2 | A task must reference an existing project. | Automated integration tests: `Tasks/CreateTaskTests.cs`, `Tasks/UpdateTaskTests.cs`, and the database foreign-key test in `Projects/CascadeAndForeignKeyTests.cs` (`CascadeAndForeignKeyTests`). |
+| AC-3 | Invalid status and priority values are rejected, in the request body and in the list filters. | Automated integration tests: body in `Tasks/CreateTaskTests.cs` and `Tasks/UpdateTaskTests.cs`; filters in `Tasks/FilterTasksTests.cs` (`FilterTasksTests`). |
+| AC-4 | Task updates persist after the backend restarts. | Automated test on a temporary SQLite file: `Persistence/TaskPersistenceTests.cs` (`TaskPersistenceTests`). Manual check: edit a task, stop and restart the API, reload the page; the change is still there. |
+| AC-5 | Deleting a project deletes all its tasks (cascade). | Automated integration tests: `Projects/CascadeAndForeignKeyTests.cs` (`CascadeAndForeignKeyTests`). |
+| AC-6 | Dashboard totals reflect saved task data. | Automated integration tests: `Dashboard/DashboardTests.cs` (`DashboardTests`). |
+| AC-7 | The app runs locally using the documented commands. | Manual check: fresh `git clone`, then follow only this README ([Prerequisites](#prerequisites), [Run it locally](#run-it-locally) and [Test and build](#test-and-build)). |
+
+Swagger documents every API endpoint, checked by `OpenApiTests` (NFR-6).
+
 ## Dependencies added beyond the templates
 
 The projects were created from the standard `dotnet new webapi`, `dotnet new xunit` and `create-vite` (`react-ts`) templates. Only these packages were added, each for a specific reason:

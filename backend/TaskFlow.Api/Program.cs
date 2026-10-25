@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using TaskFlow.Api.Data;
 using TaskFlow.Api.Services;
 
@@ -68,7 +69,29 @@ if (app.Environment.IsDevelopment())
 // No HTTPS redirection and no CORS: the app is HTTP-only on localhost, and the
 // browser reaches the API through the Vite proxy (same origin).
 
-app.MapHealthChecks("/api/health");
+// GET /api/health answers 200 with the text "Healthy". Any other status (Degraded included)
+// answers 503 with the status name, deliberately, as the release spec asks.
+// It is a minimal-API endpoint instead of MapHealthChecks because MapHealthChecks creates a
+// routed endpoint without the route-handler metadata the OpenAPI generator needs to describe
+// it, so it never appears in Swagger. Here we ask the same built-in HealthCheckService
+// (registered by AddHealthChecks) for its report, and send the same no-cache headers.
+app.MapGet("/api/health", async (HealthCheckService healthChecks, HttpContext context, CancellationToken cancellationToken) =>
+    {
+        var report = await healthChecks.CheckHealthAsync(cancellationToken);
+        var statusCode = report.Status == HealthStatus.Healthy
+            ? StatusCodes.Status200OK
+            : StatusCodes.Status503ServiceUnavailable;
+
+        context.Response.Headers.CacheControl = "no-store, no-cache";
+        context.Response.Headers.Pragma = "no-cache";
+        context.Response.Headers.Expires = "Thu, 01 Jan 1970 00:00:00 GMT";
+        return Results.Text(report.Status.ToString(), "text/plain", statusCode: statusCode);
+    })
+    .WithName("GetHealth")
+    .WithTags("Health")
+    .Produces<string>(StatusCodes.Status200OK, "text/plain")
+    .Produces<string>(StatusCodes.Status503ServiceUnavailable, "text/plain");
+
 app.MapControllers();
 
 app.Run();
