@@ -12,7 +12,10 @@ namespace TaskFlow.Api.Controllers;
 [Route("api/tasks")]
 public class TasksController(TaskService tasks) : ControllerBase
 {
-    /// <summary>GET /api/tasks?projectId= — newest first; an invalid projectId is a 400.</summary>
+    /// <summary>
+    /// GET /api/tasks?projectId=&amp;status=&amp;priority= — newest first, filters AND-combined;
+    /// any invalid parameter is a 400 listing every bad one.
+    /// </summary>
     [HttpGet]
     [ProducesResponseType<List<TaskDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]

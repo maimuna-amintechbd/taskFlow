@@ -4,6 +4,8 @@ import { messageOf } from '../api/client'
 import { deleteTask, listTasks } from '../api/tasks'
 import type { TaskDto } from '../api/types'
 import ErrorBanner from '../components/ErrorBanner'
+import TaskFilters from '../components/TaskFilters'
+import { emptyTasksMessage, useTaskFilterParams } from '../components/taskFilterParams'
 import TaskTable from '../components/TaskTable'
 
 type ListState =
@@ -11,26 +13,35 @@ type ListState =
   | { kind: 'loaded'; tasks: TaskDto[] }
   | { kind: 'error'; message: string }
 
-/** Every task across all projects, newest first. */
+/** Every task across all projects, newest first, narrowed by the filters in the URL. */
 export default function TasksPage() {
+  const [filters, setFilters] = useTaskFilterParams()
+  // Plain strings (or undefined) are stable between renders, unlike the filters object,
+  // so they are safe effect and callback dependencies.
+  const { status, priority } = filters
   const [list, setList] = useState<ListState>({ kind: 'loading' })
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deletingTask, setDeletingTask] = useState(false)
 
   // Re-fetch after a change. The old list stays on screen while the request runs;
-  // if the re-fetch fails, the error state replaces the table.
+  // if the re-fetch fails, the error state replaces the table. Uses the current filters.
   const loadTasks = useCallback(async () => {
     try {
-      setList({ kind: 'loaded', tasks: await listTasks() })
+      setList({ kind: 'loaded', tasks: await listTasks({ status, priority }) })
     } catch (error) {
       setList({ kind: 'error', message: messageOf(error) })
     }
-  }, [])
+  }, [status, priority])
 
+  // Runs on mount and again whenever a filter in the URL changes (select, Back, reload).
   useEffect(() => {
-    // Ignore a late answer if the page was left before the request finished.
+    // Ignore a late answer if the page was left, or the filters changed, before it arrived.
     let ignore = false
-    listTasks()
+    // Clear the old rows, so the table never shows a list that doesn't match the selects.
+    // Deliberate: this resets the view right before re-syncing with the API.
+    // oxlint-disable-next-line react/set-state-in-effect
+    setList({ kind: 'loading' })
+    listTasks({ status, priority })
       .then((tasks) => {
         if (!ignore) setList({ kind: 'loaded', tasks })
       })
@@ -40,7 +51,7 @@ export default function TasksPage() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [status, priority])
 
   async function handleDelete(task: TaskDto) {
     if (deletingTask) return
@@ -65,6 +76,7 @@ export default function TasksPage() {
       <p>
         <Link to="/tasks/new">Add task</Link>
       </p>
+      <TaskFilters values={filters} onChange={setFilters} disabled={deletingTask} />
       {deleteError && <ErrorBanner message={deleteError} />}
       {list.kind === 'loading' && <p>Loading tasks…</p>}
       {list.kind === 'error' && <ErrorBanner message={list.message} />}
@@ -74,6 +86,7 @@ export default function TasksPage() {
           label="All tasks"
           onDelete={handleDelete}
           deleteDisabled={deletingTask}
+          emptyMessage={emptyTasksMessage(filters)}
         />
       )}
     </section>

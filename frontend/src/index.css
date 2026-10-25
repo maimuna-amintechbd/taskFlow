@@ -153,6 +153,20 @@ button:disabled {
   gap: 0.5rem;
 }
 
+/* --- Task filters --- */
+
+/* The Status and Priority selects sit side by side and wrap onto new lines on narrow screens. */
+.task-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0 0 1rem;
+}
+
+.task-filters .form-field {
+  min-width: 10rem;
+}
+
 /* --- Lists --- */
 
 .empty-state {

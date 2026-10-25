@@ -7,6 +7,8 @@ import type { ProjectDto, SaveProjectRequest, TaskDto } from '../api/types'
 import ErrorBanner from '../components/ErrorBanner'
 import ProjectForm from '../components/ProjectForm'
 import { splitProjectFieldErrors } from '../components/projectFormFields'
+import TaskFilters from '../components/TaskFilters'
+import { emptyTasksMessage, useTaskFilterParams } from '../components/taskFilterParams'
 import TaskTable from '../components/TaskTable'
 import NotFoundPage from './NotFoundPage'
 
@@ -46,6 +48,9 @@ export default function ProjectPage() {
 
 function ProjectDetails({ projectId }: { projectId: number }) {
   const navigate = useNavigate()
+  const [filters, setFilters] = useTaskFilterParams()
+  // Plain strings (or undefined), so they are stable effect and callback dependencies.
+  const { status, priority } = filters
   const [state, setState] = useState<ProjectState>({ kind: 'loading' })
   const [editing, setEditing] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
@@ -66,11 +71,11 @@ function ProjectDetails({ projectId }: { projectId: number }) {
 
   const loadTasks = useCallback(async () => {
     try {
-      setTasksState({ kind: 'loaded', tasks: await listTasks({ projectId }) })
+      setTasksState({ kind: 'loaded', tasks: await listTasks({ projectId, status, priority }) })
     } catch (error) {
       setTasksState({ kind: 'error', message: messageOf(error) })
     }
-  }, [projectId])
+  }, [projectId, status, priority])
 
   useEffect(() => {
     // Ignore a late answer if the page was left before the request finished.
@@ -88,9 +93,14 @@ function ProjectDetails({ projectId }: { projectId: number }) {
   }, [projectId])
 
   // This project's tasks load on their own, so a failure here leaves the details usable.
+  // They re-load whenever a filter in the URL changes (select, Back, reload).
   useEffect(() => {
     let ignore = false
-    listTasks({ projectId })
+    // Clear the old rows, so the table never shows a list that doesn't match the selects.
+    // Deliberate: this resets the view right before re-syncing with the API.
+    // oxlint-disable-next-line react/set-state-in-effect
+    setTasksState({ kind: 'loading' })
+    listTasks({ projectId, status, priority })
       .then((tasks) => {
         if (!ignore) setTasksState({ kind: 'loaded', tasks })
       })
@@ -100,7 +110,7 @@ function ProjectDetails({ projectId }: { projectId: number }) {
     return () => {
       ignore = true
     }
-  }, [projectId])
+  }, [projectId, status, priority])
 
   function startEditing() {
     setFieldErrors({})
@@ -249,6 +259,7 @@ function ProjectDetails({ projectId }: { projectId: number }) {
       <p>
         <Link to={`/tasks/new?projectId=${projectId}`}>Add task</Link>
       </p>
+      <TaskFilters values={filters} onChange={setFilters} disabled={deletingTask || deleting} />
       {taskDeleteError && <ErrorBanner message={taskDeleteError} />}
       {tasksState.kind === 'loading' && <p>Loading tasks…</p>}
       {tasksState.kind === 'error' && <ErrorBanner message={tasksState.message} />}
@@ -258,6 +269,7 @@ function ProjectDetails({ projectId }: { projectId: number }) {
           label={`Tasks in ${project.name}`}
           onDelete={handleDeleteTask}
           deleteDisabled={deletingTask || deleting}
+          emptyMessage={emptyTasksMessage(filters)}
         />
       )}
     </section>

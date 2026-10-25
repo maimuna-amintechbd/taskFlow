@@ -22,3 +22,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-4-delete-a-task-and-prove-cascade.md`
   summary: Automated checks for the task-delete UI (Cancel sends nothing, row removed after re-fetch, project count refreshes, banner on failure).
   evidence: Verification-gap review; no frontend test runner in the MVP. Same decision as Stories 1.1–3.3.
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-1-filter-tasks.md`
+  summary: Automated checks for URL-driven filters (select ↔ URL sync, All removes the parameter, Back restores, junk treated as All, delete re-fetches with filters).
+  evidence: Blind review; no frontend test runner in the MVP. `react/exhaustive-deps` lint now guards the dependency arrays. Same decision as Stories 1.1–3.4.

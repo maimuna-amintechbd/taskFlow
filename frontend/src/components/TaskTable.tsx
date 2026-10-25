@@ -11,11 +11,19 @@ interface TaskTableProps {
   onDelete: (task: TaskDto) => void
   /** Disables every row's Delete button, e.g. while a delete is in flight. */
   deleteDisabled?: boolean
+  /** Shown instead of the table when there are no tasks, e.g. when filters match nothing. */
+  emptyMessage?: string
 }
 
 /** The task list shared by the Tasks page and each project's page. */
-export default function TaskTable({ tasks, label, onDelete, deleteDisabled = false }: TaskTableProps) {
-  if (tasks.length === 0) return <EmptyState message="No tasks yet." />
+export default function TaskTable({
+  tasks,
+  label,
+  onDelete,
+  deleteDisabled = false,
+  emptyMessage = 'No tasks yet.',
+}: TaskTableProps) {
+  if (tasks.length === 0) return <EmptyState message={emptyMessage} />
 
   return (
     // The wrapper scrolls sideways on narrow screens instead of squashing the columns.

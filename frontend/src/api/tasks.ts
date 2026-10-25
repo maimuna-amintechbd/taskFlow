@@ -1,15 +1,23 @@
 import { request } from './client'
-import type { SaveTaskRequest, TaskDto } from './types'
+import type { SaveTaskRequest, TaskDto, TaskItemStatus, TaskPriority } from './types'
 
-/** Optional list filters. Leaving one out means "All". Story 4.1 adds status and priority. */
+/** Optional list filters, AND-combined. Leaving one out means "All". */
 export interface TaskListFilters {
   projectId?: number
+  status?: TaskItemStatus
+  priority?: TaskPriority
 }
 
-/** GET /api/tasks — newest first; rejects with ApiError 400 for an unknown projectId. */
+/**
+ * GET /api/tasks — newest first, filtered by the API (never on the client).
+ * Only the filters that are set are sent. Rejects with ApiError 400 for an unknown
+ * projectId or an invalid status/priority.
+ */
 export function listTasks(filters: TaskListFilters = {}): Promise<TaskDto[]> {
   const params = new URLSearchParams()
   if (filters.projectId !== undefined) params.set('projectId', String(filters.projectId))
+  if (filters.status !== undefined) params.set('status', filters.status)
+  if (filters.priority !== undefined) params.set('priority', filters.priority)
   const query = params.toString()
   return request<TaskDto[]>(query === '' ? '/api/tasks' : `/api/tasks?${query}`)
 }

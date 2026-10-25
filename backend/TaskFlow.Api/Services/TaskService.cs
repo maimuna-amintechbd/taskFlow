@@ -35,31 +35,83 @@ public class TaskService(TaskFlowDbContext db, TimeProvider timeProvider)
             t.CreatedAt);
 
     /// <summary>
-    /// Every task, newest first (id breaks ties between tasks created at the same instant).
-    /// An optional project filter must be a whole number naming an existing project;
-    /// otherwise the result is Invalid under "projectId", never an empty list.
+    /// Every task, newest first (id breaks ties between tasks created at the same instant),
+    /// narrowed by the optional filters in <paramref name="query"/>, AND-combined.
+    /// A project filter must be a whole number naming an existing project; status and
+    /// priority must be exact member names (ignoring case). Every parameter is checked
+    /// before returning, so several bad ones are reported together as Invalid, never
+    /// as an empty list.
     /// </summary>
     public async Task<ServiceResult<List<TaskDto>>> ListAsync(TaskListQuery query)
     {
-        var tasks = db.TaskItems.AsNoTracking();
+        var errors = new Dictionary<string, string[]>();
 
+        int? projectId = null;
         if (query.ProjectId is not null)
         {
             // AllowLeadingSign + InvariantCulture: digits with an optional sign only.
             // Spaces, decimals, thousands separators and "" are rejected.
-            if (!int.TryParse(query.ProjectId, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var projectId))
+            if (!int.TryParse(query.ProjectId, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var id))
             {
-                return ServiceResult<List<TaskDto>>.Invalid(
-                    new() { ["projectId"] = ["Project id must be a whole number."] });
+                errors["projectId"] = ["Project id must be a whole number."];
             }
-
-            if (!await db.Projects.AnyAsync(p => p.Id == projectId))
+            else if (!await db.Projects.AnyAsync(p => p.Id == id))
             {
-                return ServiceResult<List<TaskDto>>.Invalid(
-                    new() { ["projectId"] = [$"Project {projectId} does not exist."] });
+                errors["projectId"] = [$"Project {id} does not exist."];
             }
+            else
+            {
+                projectId = id;
+            }
+        }
 
-            tasks = tasks.Where(t => t.ProjectId == projectId);
+        // null = parameter left out = "All". Anything present, "" included, must parse.
+        TaskItemStatus? status = null;
+        if (query.Status is not null)
+        {
+            if (EnumNames.TryParse<TaskItemStatus>(query.Status, out var parsed))
+            {
+                status = parsed;
+            }
+            else
+            {
+                errors["status"] = [$"Status must be one of: {EnumNames.List<TaskItemStatus>()}."];
+            }
+        }
+
+        TaskPriority? priority = null;
+        if (query.Priority is not null)
+        {
+            if (EnumNames.TryParse<TaskPriority>(query.Priority, out var parsed))
+            {
+                priority = parsed;
+            }
+            else
+            {
+                errors["priority"] = [$"Priority must be one of: {EnumNames.List<TaskPriority>()}."];
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            return ServiceResult<List<TaskDto>>.Invalid(errors);
+        }
+
+        // Each Where adds an AND to the SQL; nothing runs until ToListAsync.
+        var tasks = db.TaskItems.AsNoTracking();
+        if (projectId is { } projectFilter)
+        {
+            tasks = tasks.Where(t => t.ProjectId == projectFilter);
+        }
+
+        if (status is { } statusFilter)
+        {
+            tasks = tasks.Where(t => t.Status == statusFilter);
+        }
+
+        if (priority is { } priorityFilter)
+        {
+            tasks = tasks.Where(t => t.Priority == priorityFilter);
         }
 
         var dtos = await tasks
