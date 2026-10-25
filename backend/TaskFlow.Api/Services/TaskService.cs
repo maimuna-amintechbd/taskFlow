@@ -123,6 +123,23 @@ public class TaskService(TaskFlowDbContext db, TimeProvider timeProvider)
         return ServiceResult<TaskDto>.Ok(dto!);
     }
 
+    /// <summary>
+    /// Hard delete of one task. Its project is untouched; the project's task count
+    /// drops because ProjectService.ToDto counts the rows that remain.
+    /// </summary>
+    public async Task<ServiceResult> DeleteAsync(int id)
+    {
+        var task = await db.TaskItems.FindAsync(id);
+        if (task is null)
+        {
+            return ServiceResult.NotFound();
+        }
+
+        db.TaskItems.Remove(task);
+        await db.SaveChangesAsync();
+        return ServiceResult.Ok();
+    }
+
     private Task<TaskDto?> FindDtoAsync(int id) =>
         db.TaskItems
             .AsNoTracking()

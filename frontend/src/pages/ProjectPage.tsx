@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ApiError, FALLBACK_MESSAGE, messageOf, type FieldErrors } from '../api/client'
 import { deleteProject, getProject, updateProject } from '../api/projects'
-import { listTasks } from '../api/tasks'
+import { deleteTask, listTasks } from '../api/tasks'
 import type { ProjectDto, SaveProjectRequest, TaskDto } from '../api/types'
 import ErrorBanner from '../components/ErrorBanner'
 import ProjectForm from '../components/ProjectForm'
@@ -53,6 +53,8 @@ function ProjectDetails({ projectId }: { projectId: number }) {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [tasksState, setTasksState] = useState<TasksState>({ kind: 'loading' })
+  const [taskDeleteError, setTaskDeleteError] = useState<string | null>(null)
+  const [deletingTask, setDeletingTask] = useState(false)
 
   const loadProject = useCallback(async () => {
     try {
@@ -104,6 +106,7 @@ function ProjectDetails({ projectId }: { projectId: number }) {
     setFieldErrors({})
     setFormError(null)
     setDeleteError(null)
+    setTaskDeleteError(null)
     setEditing(true)
   }
 
@@ -146,6 +149,7 @@ function ProjectDetails({ projectId }: { projectId: number }) {
 
     setDeleting(true)
     setDeleteError(null)
+    setTaskDeleteError(null)
     try {
       await deleteProject(projectId)
     } catch (error) {
@@ -154,6 +158,24 @@ function ProjectDetails({ projectId }: { projectId: number }) {
       return
     }
     navigate('/projects')
+  }
+
+  async function handleDeleteTask(task: TaskDto) {
+    if (deletingTask || deleting) return
+    if (!window.confirm(`Delete task "${task.title}"?`)) return
+
+    setDeletingTask(true)
+    setTaskDeleteError(null)
+    try {
+      await deleteTask(task.id)
+    } catch (error) {
+      setTaskDeleteError(messageOf(error))
+    } finally {
+      // Re-fetch even after a failure, so a task already deleted elsewhere leaves the list.
+      // The project is re-fetched too, so its task count matches the list.
+      await Promise.all([loadProject(), loadTasks()])
+      setDeletingTask(false)
+    }
   }
 
   if (state.kind === 'loading') {
@@ -215,7 +237,7 @@ function ProjectDetails({ projectId }: { projectId: number }) {
               type="button"
               className="button-danger"
               onClick={() => handleDelete(project)}
-              disabled={deleting}
+              disabled={deleting || deletingTask}
             >
               Delete
             </button>
@@ -227,10 +249,16 @@ function ProjectDetails({ projectId }: { projectId: number }) {
       <p>
         <Link to={`/tasks/new?projectId=${projectId}`}>Add task</Link>
       </p>
+      {taskDeleteError && <ErrorBanner message={taskDeleteError} />}
       {tasksState.kind === 'loading' && <p>Loading tasks…</p>}
       {tasksState.kind === 'error' && <ErrorBanner message={tasksState.message} />}
       {tasksState.kind === 'loaded' && (
-        <TaskTable tasks={tasksState.tasks} label={`Tasks in ${project.name}`} />
+        <TaskTable
+          tasks={tasksState.tasks}
+          label={`Tasks in ${project.name}`}
+          onDelete={handleDeleteTask}
+          deleteDisabled={deletingTask || deleting}
+        />
       )}
     </section>
   )

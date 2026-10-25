@@ -19,3 +19,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-3-edit-a-task.md`
   summary: Automated checks for TaskEditPage/TaskForm edit mode (pre-filled values, '' → null and numeric projectId in the PUT body, "Task not found.", navigation to the saved project).
   evidence: Verification-gap review; no frontend test runner in the MVP. Same decision as the Story 1.1–3.2 entries.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-4-delete-a-task-and-prove-cascade.md`
+  summary: Automated checks for the task-delete UI (Cancel sends nothing, row removed after re-fetch, project count refreshes, banner on failure).
+  evidence: Verification-gap review; no frontend test runner in the MVP. Same decision as Stories 1.1–3.3.

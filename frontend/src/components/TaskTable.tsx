@@ -7,10 +7,14 @@ interface TaskTableProps {
   tasks: TaskDto[]
   /** Names the table for screen readers, e.g. "All tasks". */
   label: string
+  /** Called when a row's Delete button is pressed. The page confirms, calls the API and re-fetches. */
+  onDelete: (task: TaskDto) => void
+  /** Disables every row's Delete button, e.g. while a delete is in flight. */
+  deleteDisabled?: boolean
 }
 
 /** The task list shared by the Tasks page and each project's page. */
-export default function TaskTable({ tasks, label }: TaskTableProps) {
+export default function TaskTable({ tasks, label, onDelete, deleteDisabled = false }: TaskTableProps) {
   if (tasks.length === 0) return <EmptyState message="No tasks yet." />
 
   return (
@@ -24,6 +28,7 @@ export default function TaskTable({ tasks, label }: TaskTableProps) {
             <th scope="col">Status</th>
             <th scope="col">Priority</th>
             <th scope="col">Due date</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -38,6 +43,19 @@ export default function TaskTable({ tasks, label }: TaskTableProps) {
               <td>{task.priority}</td>
               {/* Shown exactly as the API sends it (yyyy-MM-dd); blank when there is none. */}
               <td className="task-due">{task.dueDate ?? ''}</td>
+              <td>
+                {/* Every row says "Delete", so aria-label names the task for screen readers.
+                    It starts with the visible word, so voice control ("click Delete") still works. */}
+                <button
+                  type="button"
+                  className="button-danger"
+                  aria-label={`Delete task "${task.title}"`}
+                  onClick={() => onDelete(task)}
+                  disabled={deleteDisabled}
+                >
+                  Delete
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

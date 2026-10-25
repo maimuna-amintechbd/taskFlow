@@ -36,3 +36,8 @@ export function updateTask(id: number, body: SaveTaskRequest): Promise<TaskDto> 
     body: JSON.stringify(body),
   })
 }
+
+/** DELETE /api/tasks/{id} — resolves with no value (204); rejects with ApiError 404 for an unknown id. */
+export function deleteTask(id: number): Promise<void> {
+  return request<void>(`/api/tasks/${id}`, { method: 'DELETE' })
+}

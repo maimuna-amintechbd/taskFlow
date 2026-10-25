@@ -74,4 +74,19 @@ public class TasksController(TaskService tasks) : ControllerBase
             _ => throw new InvalidOperationException($"Unexpected result kind {result.Kind}."),
         };
     }
+
+    /// <summary>DELETE /api/tasks/{id} — 204 when removed, 404 for an unknown id.</summary>
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var result = await tasks.DeleteAsync(id);
+        return result.Kind switch
+        {
+            ResultKind.Ok => NoContent(),
+            ResultKind.NotFound => NotFound(),
+            _ => throw new InvalidOperationException($"Unexpected result kind {result.Kind}."),
+        };
+    }
 }
