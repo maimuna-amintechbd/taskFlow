@@ -22,7 +22,7 @@ Start the frontend (second terminal):
 cd frontend && npm install && npm run dev            # app on http://localhost:5173
 ```
 
-Open <http://localhost:5173>. The Dashboard shows **API connected** when the frontend can reach the API.
+Open <http://localhost:5173>. The Dashboard shows the **Total**, **Completed** and **Pending** task counts when the frontend can reach the API (all 0 on a fresh database), and a "Cannot reach the server" message when it can't.
 Swagger UI (Development only) is at <http://localhost:5080/swagger>.
 
 The first run creates the SQLite database file and applies the migrations automatically; there is no manual SQL step. The path `taskflow.db` is relative to the working directory: the `dotnet run --project TaskFlow.Api` command above creates it in `backend/TaskFlow.Api/`, and starting the API another way (for example from a different folder) may create a separate, empty database. To start over with an empty database, stop the API first, then delete `backend/TaskFlow.Api/taskflow.db*` (SQLite also writes `-wal` and `-shm` files next to it). These files are gitignored.

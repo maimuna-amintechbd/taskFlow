@@ -2,7 +2,7 @@
 title: 'Story 5.1 — Release check: fresh clone, all acceptance checks, performance'
 type: 'chore'
 created: '2026-10-26'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '52a02c50ad45a31d99497348de3544fa44c8513a'
@@ -59,6 +59,25 @@ context:
 
 - Part A review fixes: no-cache headers restored; 503 documented; comment corrected (Degraded→503 deliberate per spec); `HealthTests` additionally asserts `text/plain` (the unmodified test passed first, 174/174, proving the contract unchanged; the extra assertion only tightens it); documented-path set must equal AD-9 exactly; README test command/prerequisites link/NFR-6 note.
 - Part A verification by the orchestrator (2026-10-26): `dotnet build` 0 warnings/0 errors; `dotnet test` all pass; `npm run build` ok; `npm run lint` clean.
+
+### Part B — release verification (orchestrator, 2026-10-26, on commit `baf720a`)
+
+**Method:** `git clone` of the local repo (Days 3–7 are not pushed yet) into an empty scratch folder, then only the README's commands. Package caches (npm, NuGet) were already warm on this machine, so downloads were near-instant; a cold machine adds the package download time.
+
+| Check | Verified by | Result |
+|---|---|---|
+| SM-2 / AC-7 fresh clone ≤ 10 min | clone → `dotnet run --project TaskFlow.Api` + `npm install && npm run dev` → keyboard UJ-1/UJ-2 in the UI → AC-4 restart → `(cd backend && dotnet test)` → `(cd frontend && npm run build)` | **PASS** — apps up 7 s after clone, whole flow 2 min 47 s; `taskflow.db` created automatically; 174/174 tests; build ok. Finding: README still said the Dashboard shows "API connected" (stale since Story 4.2) → fixed in this commit. |
+| AC-1 valid title | `CreateTaskTests`, `UpdateTaskTests` (174/174 on the clone) | **PASS** |
+| AC-2 valid project | `CreateTaskTests`, `UpdateTaskTests`, FK test in `CascadeAndForeignKeyTests` | **PASS** |
+| AC-3 status/priority (body + filters) | `CreateTaskTests`, `UpdateTaskTests`, `FilterTasksTests` | **PASS** |
+| AC-4 persistence after restart | `TaskPersistenceTests` + manual on the clone: edited "Plan the week" → "(edited)", Done in the browser; API stopped and restarted; GET returned the edited title, Done, due 2026-10-30 | **PASS** |
+| AC-5 cascade | `CascadeAndForeignKeyTests` (AC-5 test) + UJ-2 in the UI: `Delete project "Portfolio site" and its 3 tasks?` → dashboard 0/0/0 | **PASS** |
+| AC-6 dashboard totals | `DashboardTests` + UI: 3/0/3 after UJ-1, 0/0/0 after UJ-2, 501/175/326 with the load data | **PASS** |
+| NFR-6 Swagger lists every endpoint | `OpenApi_EveryApiEndpoint_IsDocumented` + live `/openapi/v1.json` on the clone: health get; projects get/post; projects/{id} get/put/delete; tasks get/post; tasks/{id} get/put/delete; dashboard get; `/swagger` 200 | **PASS** |
+| NFR-7 < 1 s with 500 tasks | 500 tasks via a throwaway Python loop (not committed). Production build (`vite preview`): Tasks page 95–150 ms (API 9–11 ms), filtered 48–72 ms (API 6–10 ms), Dashboard 40–46 ms (API 6–8 ms). Dev server: 543–1307 ms page-visible (Vite compiling modules on demand + React StrictMode double requests; API calls 10–41 ms) | **PASS** (production); dev-mode overhead noted |
+| NFR-8 keyboard, Chrome | Keyboard-only script (Tab/Enter/arrows/typed keys, no clicks): UJ-1 create project, 3 tasks (priorities via arrow keys), filter Todo+High, set InProgress; UJ-2 delete project + confirm. 80 Tab presses; 0 unlabelled inputs. Due date typed digit by digit → `2026-10-30` saved | **PASS** |
+| NFR-8 Firefox | Firefox 157 headless renders the app shell (nav, layout, styles) on Dashboard, filtered Tasks and Project pages | **PARTIAL** — rendering only; keyboard walkthrough in Firefox left as a manual check for the user |
+| NFR-8 Edge | not installed on this machine | **NOT RUN** |
 
 ## Spec Change Log
 
