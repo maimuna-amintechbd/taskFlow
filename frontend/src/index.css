@@ -75,6 +75,34 @@ textarea:focus-visible {
   color: #82071e;
 }
 
+/* --- Dashboard --- */
+
+/* Three labelled numbers side by side, wrapping onto new lines on narrow screens. */
+.dashboard-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0;
+}
+
+.dashboard-total {
+  min-width: 10rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+}
+
+.dashboard-total dt {
+  color: #59636e;
+  font-weight: 600;
+}
+
+.dashboard-total dd {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
 /* --- Forms --- */
 
 .project-form,

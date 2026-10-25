@@ -48,3 +48,10 @@ export interface SaveTaskRequest {
   /** 'yyyy-MM-dd' or null. */
   dueDate: string | null
 }
+
+/** GET /api/dashboard. total = completed (Done) + pending (Todo + InProgress), across all projects. */
+export interface DashboardDto {
+  total: number
+  completed: number
+  pending: number
+}

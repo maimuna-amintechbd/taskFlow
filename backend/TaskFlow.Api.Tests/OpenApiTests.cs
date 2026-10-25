@@ -92,6 +92,28 @@ public class OpenApiTests : IDisposable
         Assert.Equal(["204", "404"], responses);
     }
 
+    [Fact]
+    public async Task OpenApi_GetDashboard_Documents200WithDashboardDto()
+    {
+        var client = _factory.CreateClient();
+
+        using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
+
+        var responses = document.RootElement
+            .GetProperty("paths").GetProperty("/api/dashboard")
+            .GetProperty("get").GetProperty("responses");
+        Assert.Equal(["200"], responses.EnumerateObject().Select(r => r.Name).ToArray());
+
+        var schema = responses.GetProperty("200").GetProperty("content")
+            .GetProperty("application/json").GetProperty("schema");
+        Assert.Equal("#/components/schemas/DashboardDto", schema.GetProperty("$ref").GetString());
+
+        var properties = document.RootElement.GetProperty("components").GetProperty("schemas")
+            .GetProperty("DashboardDto").GetProperty("properties")
+            .EnumerateObject().Select(p => p.Name).Order().ToArray();
+        Assert.Equal(["completed", "pending", "total"], properties);
+    }
+
     [Theory]
     [InlineData("status", new[] { "Todo", "InProgress", "Done" })]
     [InlineData("priority", new[] { "Low", "Medium", "High" })]

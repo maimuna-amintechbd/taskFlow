@@ -42,6 +42,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 // Business rules and data access. Scoped = one instance per request.
 builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<TaskService>();
+builder.Services.AddScoped<DashboardService>();
 
 var app = builder.Build();
 

@@ -25,3 +25,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-4-1-filter-tasks.md`
   summary: Automated checks for URL-driven filters (select ↔ URL sync, All removes the parameter, Back restores, junk treated as All, delete re-fetches with filters).
   evidence: Blind review; no frontend test runner in the MVP. `react/exhaustive-deps` lint now guards the dependency arrays. Same decision as Stories 1.1–3.4.
+- source_spec: `_bmad-output/implementation-artifacts/spec-4-2-dashboard-totals.md`
+  summary: Automated check that DashboardPage maps each label to its field and shows only the banner on failure.
+  evidence: Verification-gap review; no frontend test runner in the MVP. Same decision as Stories 1.1–4.1.
