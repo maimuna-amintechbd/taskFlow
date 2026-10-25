@@ -3,6 +3,9 @@
 
 const UNREACHABLE_MESSAGE = 'Cannot reach the server. Is the API running?'
 
+/** Shown when something other than an ApiError goes wrong. */
+export const FALLBACK_MESSAGE = 'Something went wrong. Please try again.'
+
 /** Field errors keyed by camelCase request property, e.g. { status: ['...'] }. */
 export type FieldErrors = Record<string, string[]>
 
@@ -16,6 +19,11 @@ export class ApiError extends Error {
     this.status = status
     this.fieldErrors = fieldErrors
   }
+}
+
+/** The message a page shows for a failed request: the ApiError's own, or the fallback. */
+export function messageOf(error: unknown): string {
+  return error instanceof ApiError ? error.message : FALLBACK_MESSAGE
 }
 
 function unreachable(): ApiError {

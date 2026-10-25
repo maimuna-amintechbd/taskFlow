@@ -50,6 +50,20 @@ public class OpenApiTests : IDisposable
         Assert.Equal(["204", "404"], deleteResponses);
     }
 
+    [Fact]
+    public async Task OpenApi_ListTasks_DocumentsResponses()
+    {
+        var client = _factory.CreateClient();
+
+        using var document = JsonDocument.Parse(await client.GetStringAsync("/openapi/v1.json"));
+
+        var responses = document.RootElement
+            .GetProperty("paths").GetProperty("/api/tasks")
+            .GetProperty("get").GetProperty("responses")
+            .EnumerateObject().Select(r => r.Name).Order().ToArray();
+        Assert.Equal(["200", "400"], responses);
+    }
+
     [Theory]
     [InlineData("status", new[] { "Todo", "InProgress", "Done" })]
     [InlineData("priority", new[] { "Low", "Medium", "High" })]

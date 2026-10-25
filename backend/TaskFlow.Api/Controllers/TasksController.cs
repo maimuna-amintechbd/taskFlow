@@ -12,6 +12,21 @@ namespace TaskFlow.Api.Controllers;
 [Route("api/tasks")]
 public class TasksController(TaskService tasks) : ControllerBase
 {
+    /// <summary>GET /api/tasks?projectId= — newest first; an invalid projectId is a 400.</summary>
+    [HttpGet]
+    [ProducesResponseType<List<TaskDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<List<TaskDto>>> List([FromQuery] TaskListQuery query)
+    {
+        var result = await tasks.ListAsync(query);
+        return result.Kind switch
+        {
+            ResultKind.Ok => Ok(result.Value),
+            ResultKind.Invalid => ValidationProblem(new ValidationProblemDetails(result.Errors)),
+            _ => throw new InvalidOperationException($"Unexpected result kind {result.Kind}."),
+        };
+    }
+
     [HttpGet("{id:int}")]
     [ProducesResponseType<TaskDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

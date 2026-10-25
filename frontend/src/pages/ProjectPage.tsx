@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ApiError, type FieldErrors } from '../api/client'
+import { ApiError, FALLBACK_MESSAGE, messageOf, type FieldErrors } from '../api/client'
 import { deleteProject, getProject, updateProject } from '../api/projects'
-import type { ProjectDto, SaveProjectRequest } from '../api/types'
+import { listTasks } from '../api/tasks'
+import type { ProjectDto, SaveProjectRequest, TaskDto } from '../api/types'
 import ErrorBanner from '../components/ErrorBanner'
 import ProjectForm from '../components/ProjectForm'
 import { splitProjectFieldErrors } from '../components/projectFormFields'
+import TaskTable from '../components/TaskTable'
 import NotFoundPage from './NotFoundPage'
 
-const FALLBACK_MESSAGE = 'Something went wrong. Please try again.'
 const NOT_FOUND_MESSAGE = 'Project not found.'
 
 type ProjectState =
@@ -17,9 +18,10 @@ type ProjectState =
   | { kind: 'notFound' }
   | { kind: 'error'; message: string }
 
-function messageOf(error: unknown): string {
-  return error instanceof ApiError ? error.message : FALLBACK_MESSAGE
-}
+type TasksState =
+  | { kind: 'loading' }
+  | { kind: 'loaded'; tasks: TaskDto[] }
+  | { kind: 'error'; message: string }
 
 function stateFromError(error: unknown): ProjectState {
   return error instanceof ApiError && error.status === 404
@@ -50,12 +52,21 @@ function ProjectDetails({ projectId }: { projectId: number }) {
   const [formError, setFormError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [tasksState, setTasksState] = useState<TasksState>({ kind: 'loading' })
 
   const loadProject = useCallback(async () => {
     try {
       setState({ kind: 'loaded', project: await getProject(projectId) })
     } catch (error) {
       setState(stateFromError(error))
+    }
+  }, [projectId])
+
+  const loadTasks = useCallback(async () => {
+    try {
+      setTasksState({ kind: 'loaded', tasks: await listTasks({ projectId }) })
+    } catch (error) {
+      setTasksState({ kind: 'error', message: messageOf(error) })
     }
   }, [projectId])
 
@@ -68,6 +79,21 @@ function ProjectDetails({ projectId }: { projectId: number }) {
       })
       .catch((error: unknown) => {
         if (!ignore) setState(stateFromError(error))
+      })
+    return () => {
+      ignore = true
+    }
+  }, [projectId])
+
+  // This project's tasks load on their own, so a failure here leaves the details usable.
+  useEffect(() => {
+    let ignore = false
+    listTasks({ projectId })
+      .then((tasks) => {
+        if (!ignore) setTasksState({ kind: 'loaded', tasks })
+      })
+      .catch((error: unknown) => {
+        if (!ignore) setTasksState({ kind: 'error', message: messageOf(error) })
       })
     return () => {
       ignore = true
@@ -105,7 +131,8 @@ function ProjectDetails({ projectId }: { projectId: number }) {
     setFormError(null)
     // Re-fetch instead of using the PUT response, so the page always shows the server's
     // data. Leave edit mode afterwards, so the details never flash the old values.
-    await loadProject()
+    // The tasks are re-fetched too: their rows show the (possibly renamed) project.
+    await Promise.all([loadProject(), loadTasks()])
     setEditing(false)
     return true
   }
@@ -194,6 +221,16 @@ function ProjectDetails({ projectId }: { projectId: number }) {
             </button>
           </div>
         </div>
+      )}
+
+      <h2>Tasks</h2>
+      <p>
+        <Link to={`/tasks/new?projectId=${projectId}`}>Add task</Link>
+      </p>
+      {tasksState.kind === 'loading' && <p>Loading tasks…</p>}
+      {tasksState.kind === 'error' && <ErrorBanner message={tasksState.message} />}
+      {tasksState.kind === 'loaded' && (
+        <TaskTable tasks={tasksState.tasks} label={`Tasks in ${project.name}`} />
       )}
     </section>
   )

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { ApiError, type FieldErrors } from '../api/client'
+import { ApiError, FALLBACK_MESSAGE, messageOf, type FieldErrors } from '../api/client'
 import { createProject, listProjects } from '../api/projects'
 import type { ProjectDto, SaveProjectRequest } from '../api/types'
 import EmptyState from '../components/EmptyState'
@@ -8,16 +8,10 @@ import ErrorBanner from '../components/ErrorBanner'
 import ProjectForm from '../components/ProjectForm'
 import { splitProjectFieldErrors } from '../components/projectFormFields'
 
-const FALLBACK_MESSAGE = 'Something went wrong. Please try again.'
-
 type ListState =
   | { kind: 'loading' }
   | { kind: 'loaded'; projects: ProjectDto[] }
   | { kind: 'error'; message: string }
-
-function messageOf(error: unknown): string {
-  return error instanceof ApiError ? error.message : FALLBACK_MESSAGE
-}
 
 export default function ProjectsPage() {
   const [list, setList] = useState<ListState>({ kind: 'loading' })

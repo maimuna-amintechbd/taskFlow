@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Api.Data;
@@ -32,6 +33,42 @@ public class TaskService(TaskFlowDbContext db, TimeProvider timeProvider)
             t.ProjectId,
             t.Project.Name,
             t.CreatedAt);
+
+    /// <summary>
+    /// Every task, newest first (id breaks ties between tasks created at the same instant).
+    /// An optional project filter must be a whole number naming an existing project;
+    /// otherwise the result is Invalid under "projectId", never an empty list.
+    /// </summary>
+    public async Task<ServiceResult<List<TaskDto>>> ListAsync(TaskListQuery query)
+    {
+        var tasks = db.TaskItems.AsNoTracking();
+
+        if (query.ProjectId is not null)
+        {
+            // AllowLeadingSign + InvariantCulture: digits with an optional sign only.
+            // Spaces, decimals, thousands separators and "" are rejected.
+            if (!int.TryParse(query.ProjectId, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var projectId))
+            {
+                return ServiceResult<List<TaskDto>>.Invalid(
+                    new() { ["projectId"] = ["Project id must be a whole number."] });
+            }
+
+            if (!await db.Projects.AnyAsync(p => p.Id == projectId))
+            {
+                return ServiceResult<List<TaskDto>>.Invalid(
+                    new() { ["projectId"] = [$"Project {projectId} does not exist."] });
+            }
+
+            tasks = tasks.Where(t => t.ProjectId == projectId);
+        }
+
+        var dtos = await tasks
+            .OrderByDescending(t => t.CreatedAt)
+            .ThenByDescending(t => t.Id)
+            .Select(ToDto)
+            .ToListAsync();
+        return ServiceResult<List<TaskDto>>.Ok(dtos);
+    }
 
     public async Task<ServiceResult<TaskDto>> GetByIdAsync(int id)
     {
